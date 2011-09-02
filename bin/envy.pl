@@ -15,6 +15,20 @@ Version 0.01
 This is a simple curses app that emulates the base functionality of
 Notational Velocity (http://notational.net/).
 
+=head1 KEYS
+
+When in the text entry area:
+
+  <Enter> narrows the list of notes using the text you entered
+  <Ctrl-C>, <Ctrl-Q>, and <Esc> all quit
+
+When in the note list:
+
+  <Enter> opens the currently highlighted note
+  <Ctrl-Q> and <Esc> take you back to the text entry area
+  <Ctrl-N> creates a new note with the text you entered
+  <Ctrl-C> quits
+
 =head1 AUTHOR
 
 Clinton R. Nixon, C<< <crnixon at gmail.com> >>
@@ -44,16 +58,7 @@ use Curses::UI::Common;
 use File::Basename;
 use String::Approx 'amatch';
 
-my $config_file = expand_filename("~/.envy");
-my $notedir = "~/Notes";
-
-if (-e $config_file) {
-  open FILE, $config_file or die $!;
-  $notedir = <FILE>;
-  chomp($notedir);
-}
-
-$notedir = expand_filename($notedir);
+my $notedir = get_notedir();
 
 my $editor = $ENV{'EDITOR'} || 'nano';
 my @notefiles = <$notedir/*.txt>;
@@ -61,6 +66,41 @@ my %notehash = map { basename($_, '.txt') => $_ } @notefiles;
 
 my $cui = new Curses::UI();
 my $win = $cui->add('win', 'Window');
+
+sub get_notedir {
+  my $config_file = expand_filename("~/.envy");
+  my $notedir = "";
+
+  if (-e $config_file) {
+    open FILE, $config_file or die $!;
+    $notedir = <FILE>;
+    close FILE;
+    chomp($notedir);
+  } else {
+    print "Where do you want to store your notes? ";
+    $notedir = <>;
+    chomp($notedir);
+    open FILE, ">$config_file" or die $!;
+    print FILE $notedir;
+    close FILE;
+  }
+
+  $notedir = expand_filename($notedir);
+  if (! -e $notedir) {
+    print "$notedir does not exist! Do you want me to create this directory? ";
+    my $yn = <>;
+    if ($yn =~ /^[Yy]/) {
+      mkdir $notedir, 0755 or die $!;
+    }
+  }
+
+  if ((! -d $notedir) || (! -w $notedir)) {
+    unlink $config_file;
+    die "There is some nonsense problem with $notedir! Check it out.";
+  }
+
+  return $notedir;
+}
 
 sub get_notes {
   my $term = shift;
@@ -131,6 +171,7 @@ $textentry->set_binding(sub { exit(0); }, "\cQ", CUI_ESCAPE);
 $listbox->set_binding(sub { 
     $listbox->clear_selection();
     $textentry->text("");
+    $listbox->values(get_notes());
     $listbox->lose_focus();
     $textentry->focus(); 
   }, "\cQ", CUI_ESCAPE);
