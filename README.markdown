@@ -21,6 +21,12 @@ If everything works as expected, running `perl Makefile.PL` will ask you if
 you want to download the necessary modules from CPAN. If not, you will need
 to install Curses::UI, String::Approx, and File::Path::Expand from CPAN.
 
+## Running It!
+
+  envy.pl
+
+I like to alias this to `nv`.
+
 ## Support and Documentation
 
 After installing, you can find documentation for this program with the
