@@ -15,7 +15,7 @@ To install envy, run the following commands:
 	perl Makefile.PL
 	make
 	make test
-	make install
+	sudo make install
 
 If everything works as expected, running `perl Makefile.PL` will ask you if
 you want to download the necessary modules from CPAN. If not, you will need
